@@ -1,0 +1,9 @@
+
+%% Copyright (c) JinGan <jg_513@163.com>
+
+{application, config_compiler, [
+    {description, "config_compiler"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {env, []}
+]}.
