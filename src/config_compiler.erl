@@ -69,7 +69,7 @@ scan_file(Filename, Options) ->
 %% Internal API
 init_forms() ->
     Strings = [
-        "-module(xt_conf).",
+        "-module(placeholder).",
         "-export([get/1, all/0, keys/0, pall/0, pkeys/0, rall/0, rkeys/0]).",
         "get(_) -> undefined.",
         "all() -> [].",
@@ -151,7 +151,7 @@ collect_file(Filename) ->
     Module = atomize(Basename),
     case file:consult(Filename) of
         {ok, Terms} ->
-            collect_terms(Terms, Module, []);
+            collect_terms(Terms, Module, [#collect{module = Module}]);
         {error, Reason} ->
             exit(error, {Reason, Filename})
     end.
