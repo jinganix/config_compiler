@@ -16,7 +16,8 @@
     {code_dir, "src/config"},
     {ebin_dir, "ebin"},
     {load, true},
-    {converter, []}
+    {converter, []},
+    {verbose, true}
 ]).
 
 -record(collect, {
@@ -34,7 +35,8 @@ scan_dir() ->
 scan_dir(Options) ->
     Options0 = init_options(Options, ?DEFAULT_OPTS),
     ImportPath = proplists:get_value(imports_dir, Options0),
-    Collects0 = collect_dir(ImportPath),
+    Verbose = proplists:get_value(verbose, Options0),
+    Collects0 = collect_dir(ImportPath, Verbose),
     check_collects(Collects0),
     Collects = convert_collects(Collects0, Options0),
     Forms = init_forms(),
@@ -51,6 +53,7 @@ scan_file(Module, Options) when is_atom(Module) ->
 scan_file(Filename, Options) ->
     Options0 = init_options(Options, ?DEFAULT_OPTS),
     ImportPath = proplists:get_value(imports_dir, Options0),
+    Verbose = proplists:get_value(verbose, Options0),
     Filename0 =
         case filename:absname(Filename) of
             Filename ->
@@ -58,7 +61,7 @@ scan_file(Filename, Options) ->
             _ ->
                 filename:absname(Filename, ImportPath)
         end,
-    Collects = collect_file(Filename0),
+    Collects = collect_file(Filename0, Verbose),
     check_collects(Collects),
     Collects0 = convert_collects(Collects, Options0),
     Forms = init_forms(),
@@ -134,10 +137,16 @@ output_ebin(Module, Forms, Options) ->
             ok
     end.
 
-collect_dir(Path) ->
+collect_dir(Path, Verbose) ->
     filelib:fold_files(Path, ".+\.config", true, fun(Filename, Acc) ->
         Basename = filename:basename(Filename, ".config"),
         Module = atomize(Basename),
+        case Verbose of
+            true ->
+                io:format("compile ~s~n", [Filename]);
+            _ ->
+                ok
+        end,
         case file:consult(Filename) of
             {ok, Terms} ->
                 collect_terms(Terms, Module, Acc);
@@ -146,7 +155,13 @@ collect_dir(Path) ->
         end
     end, []).
 
-collect_file(Filename) ->
+collect_file(Filename, Verbose) ->
+    case Verbose of
+        true ->
+            io:format("compile ~s~n", [Filename]);
+        _ ->
+            ok
+    end,
     Basename = filename:basename(Filename, ".config"),
     Module = atomize(Basename),
     case file:consult(Filename) of
